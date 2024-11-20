@@ -11,9 +11,17 @@ const BorrowingSchema = new mongoose.Schema({
         ref: 'Book',
         required: [true, 'Please provide book id'],
     },
+    employee: {
+        type: mongoose.Types.ObjectId,
+        ref: 'User',
+    },
     requestDate: {
         type: Date,
         default: new Date(),
+    },
+    duration: {
+        type: Number,
+        default: 7,
     },
     borrowDate: {
         type: Date,
@@ -24,20 +32,31 @@ const BorrowingSchema = new mongoose.Schema({
     status: {
         type: String,
         required: [true, "Please provide borrowing status"],
-        enum: ['processing', 'borrowed', 'returned'],
+        enum: ['processing', 'borrowed', 'returned', 'overdue'],
         default: 'processing',
     }
 });
 
 BorrowingSchema.pre('save', function () {
     if (this.isModified('status') && this.status === 'borrowed') {
-        this.borrowDateDate = new Date();
+        this.borrowDate = new Date();
     }
 });
 
 BorrowingSchema.pre('save', function () {
     if (this.isModified('status') && this.status === 'returned') {
         this.returnDate = new Date();
+    }
+});
+
+BorrowingSchema.pre('save', function () {
+    if (this.status === 'borrowed' && this.borrowDate) {
+        const currentDate = new Date();
+        const overdueDate = new Date(this.borrowDate);
+        overdueDate.setDate(overdueDate.getDate() + this.duration);
+        if (currentDate > overdueDate) {
+            this.status = 'overdue';
+        }
     }
 });
 

@@ -29,7 +29,6 @@ const getSingleUser = async (req, res) => {
 
 const showCurrentUser = async (req, res) => {
     const user = await User.findById(req.user.userId).select('-_id -password');
-    console.log(req.user.userId);
     res.status(StatusCodes.OK).json({ user });
 };
 
@@ -55,7 +54,6 @@ const updateUser = async (req, res) => {
 
     await user.save();
 
-    console.log(user.fullname);
     const tokenUser = createTokenUser(user);
     attachCookiesToResponse({ res, user: tokenUser });
     res.status(StatusCodes.OK).json({ user: user });

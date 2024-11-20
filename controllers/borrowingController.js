@@ -5,7 +5,7 @@ const CustomError = require('../errors');
 const { checkPermissions } = require('../utils');
 
 const createBorrowing = async (req, res) => {
-    const { book } = req.body;
+    const { book, duration } = req.body;
 
     if (!book) {
         throw new CustomError.BadRequestError('Please provide book id');
@@ -23,6 +23,7 @@ const createBorrowing = async (req, res) => {
 
     const borrowing = await Borrowing.create({
         book,
+        duration,
         reader: req.user.userId,
     });
 
@@ -32,7 +33,11 @@ const createBorrowing = async (req, res) => {
 };
 
 const getAllBorrowings = async (req, res) => {
-    const borrowings = await Borrowing.find({}).populate('book').populate('reader');
+    const borrowings = await Borrowing.find({}).populate('book').populate('reader').populate('employee');
+    borrowings.forEach(async (borrowing) => {
+        if (borrowing.status === 'borrowed')
+            await borrowing.save();
+    });
     res.status(StatusCodes.OK).json({ borrowings });
 };
 
@@ -48,7 +53,11 @@ const getSingleBorrowing = async (req, res) => {
 };
 
 const getCurrentBorrowings = async (req, res) => {
-    const borrowings = await Borrowing.find({ reader: req.user.userId }).populate('book');
+    const borrowings = await Borrowing.find({ reader: req.user.userId }).populate('book').populate('employee');
+    borrowings.forEach(async (borrowing) => {
+        if (borrowing.status === 'borrowed')
+            await borrowing.save();
+    });
     res.status(StatusCodes.OK).json({ borrowings });
 };
 
@@ -64,6 +73,7 @@ const updateBorrowing = async (req, res) => {
     const book = await Book.findById(borrowing.book);
 
     borrowing.status = status;
+    borrowing.employee = req.user.userId;
     await borrowing.save();
 
     if (status === 'returned') {
