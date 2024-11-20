@@ -1,8 +1,10 @@
+// node ./mock/createUsers.js
+
 const mongoose = require('mongoose');
 const User = require('../models/User');
 
 // environment variables
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config();
 
 const createUsers = async (users) => {
     try {
